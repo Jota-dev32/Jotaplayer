@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ JOTA ACEPLAYER PRO ⚡</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { 
+            font-family: 'Arial Black', Arial, sans-serif; 
+            background: linear-gradient(-45deg, #0a0a0a, #1a0033, #000033, #330033); 
+            background-size: 400% 400%; 
+            animation: gradientShift 8s ease infinite; 
+            color: #00ff88; 
+            height: 100vh; 
+            overflow: hidden;
+            image-rendering: crisp-edges;
+        }
+        @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        @keyframes neonGlow { 0%,100%{text-shadow:0 0 20px #ff00ff,0 0 40px #ff00ff,0 0 60px #ff00ff;} 33%{text-shadow:0 0 20px #00ff00,0 0 40px #00ff00,0 0 60px #00ff00;} 66%{text-shadow:0 0 20px #00aaff,0 0 40px #00aaff,0 0 60px #00aaff;} }
+        @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
+        @keyframes slideIn { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+        
+        header { text-align:center; padding:40px 20px; font-size:48px; animation: neonGlow 4s ease infinite; }
+        .container { max-width:1200px; margin:0 auto; padding:20px; display:flex; flex-direction:column; gap:30px; height:calc(100vh - 200px); overflow-y:auto; }
+        .input-group { display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
+        input[type="text"], input[type="url"] { height:70px; width:500px; padding:0 20px; font-size:28px; font-family:Arial Black; background:rgba(0,0,0,0.8); border:3px solid #00ff88; border-radius:15px; color:#00ff88; text-transform:uppercase; letter-spacing:2px; }
+        input:focus { outline:none; box-shadow:0 0 30px #00ff88; animation:pulse 1s infinite; }
+        button { height:70px; padding:0 40px; font-size:28px; font-family:Arial Black; background:linear-gradient(45deg,#ff00ff,#00ff88,#00aaff); border:none; border-radius:15px; color:#000; cursor:pointer; position:relative; overflow:hidden; transition:all 0.3s; min-width:200px; }
+        button::before { content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:linear-gradient(45deg,transparent, rgba(255,255,255,0.3), transparent); transform:rotate(45deg); transition:0.5s; }
+        button:hover::before, button:focus::before { top:-100%; left:-100%; }
+        button:hover, button:focus { transform:translateY(-5px); box-shadow:0 20px 40px rgba(0,255,136,0.4); animation:pulse 0.5s; }
+        button:active { transform:translateY(0); }
+        .list-container { display:flex; flex-direction:column; gap:15px; }
+        .list-item { display:flex; align-items:center; gap:15px; padding:20px; background:rgba(0,0,0,0.6); border-radius:15px; border:2px solid #444; }
+        .list-item:focus { border-color:#00ff88; box-shadow:0 0 30px #00ff88; }
+        .list-item-name { flex:1; font-size:24px; }
+        .list-actions button { height:50px; width:80px; font-size:20px; padding:0; min-width:auto; }
+        .status-bar { position:fixed; top:0; left:0; right:0; padding:10px 20px; background:rgba(0,0,0,0.9); color:#00ff88; font-size:20px; transform:translateY(-100%); transition:all 0.3s; z-index:1000; }
+        .status-bar.show { transform:translateY(0); animation:slideIn 0.5s; }
+        .section { padding:20px; background:rgba(255,255,255,0.05); border-radius:20px; border:1px solid #333; }
+        .hidden { display:none; }
+        @media (max-width:768px) { input[type="text"] { width:100%; } button { width:100%; margin:10px 0; } .list-item { flex-direction:column; text-align:center; gap:10px; } }
+        /* TV Box 10ft focus */
+        button:focus, input:focus, .list-item:focus { outline:3px solid #00ff88; outline-offset:3px; }
+    </style>
+</head>
+<body>
+    <header>⚡ JOTA ACEPLAYER PRO ⚡</header>
+    <div class="status-bar" id="statusBar"></div>
+    <div class="container">
+        <!-- Principal -->
+        <section class="section">
+            <div class="input-group">
+                <input type="text" id="acestreamId" maxlength="40" placeholder="ID AceStream (40 chars SHA1)" autofocus>
+                <button onclick="playStream()" tabindex="1">▶ REPRODUCIR</button>
+            </div>
+        </section>
+
+        <!-- Favoritos -->
+        <section class="section">
+            <div class="input-group">
+                <input type="text" id="favName" placeholder="Nombre Favorito">
+                <button onclick="saveFavorite()">💾 GUARDAR</button>
+                <button onclick="clearAllFavorites()" style="background:linear-gradient(45deg,#ff4444,#ff8888);">🗑 LIMPIAR TODOS</button>
+            </div>
+            <div class="list-container" id="favoritesList"></div>
+        </section>
+
+        <!-- Importar Lista -->
+        <section class="section">
+            <div class="input-group">
+                <input type="url" id="importUrl" value="https://www.dropbox.com/scl/fi/8ghpeqy0co00y9cattvub/aceplayer-list.json?rlkey=irni5eeq6h5wrt88zeg6iu605&st=gz94irk9&dl=1" size="50">
+                <button onclick="importList()">📥 IMPORTAR JSON</button>
+            </div>
+            <div class="list-container" id="tempList"></div>
+        </section>
+
+        <!-- Actualizaciones -->
+        <section class="section">
+            <button onclick="downloadAceserver()" style="width:100%;">🚀 DESCARGAR ACE SERVER LAST</button>
+        </section>
+    </div>
+
+    <script>
+        let currentList = 'favorites'; // 'favorites' o 'temp'
+        const APK_URL = 'https://www.dropbox.com/scl/fi/dc428yjndkeoxvke0e9v5/aceserver-last.apk?rlkey=qotzg4nkentcvj0hyel1ooo4e&st=c5j93f94&dl=1';
+
+        // Status feedback
+        function showStatus(msg, type='info') {
+            const bar = document.getElementById('statusBar');
+            bar.textContent = msg;
+            bar.className = `status-bar show ${type}`;
+            setTimeout(() => bar.classList.remove('show'), 3000);
+        }
+
+        // Validar SHA1 40 hex
+        function isValidId(id) {
+            return /^[a-fA-F0-9]{40}$/.test(id.trim());
+        }
+
+        // Reproducir
+        function playStream(id = null) {
+            let streamId = id || document.getElementById('acestreamId').value.trim();
+            if (!isValidId(streamId)) return showStatus('❌ ID inválido: 40 caracteres hexadecimales', 'error');
+            
+            // Intent AceStream
+            const intentUrl = `intent:${streamId}#Intent;scheme=acestream;package=org.acestream;action=org.acestream.action.start_content;S.content_id=${streamId};end`;
+            window.location = intentUrl;
+            
+            // Fallback 500ms
+            setTimeout(() => {
+                fetch(`http://127.0.0.1:6878/ace/getstream?id=${streamId}`, {mode: 'no-cors'})
+                    .then(() => showStatus('✅ Reproducido local'))
+                    .catch(() => showStatus('⚠️ Fallback usado'));
+            }, 500);
+            showStatus('▶ Lanzando AceStream...');
+        }
+
+        // Favoritos localStorage
+        function loadFavorites() {
+            const list = JSON.parse(localStorage.getItem('aceplayer_favorites') || '[]');
+            renderList('favoritesList', list, true);
+        }
+
+        function saveFavorite() {
+            const id = document.getElementById('acestreamId').value.trim();
+            const name = document.getElementById('favName').value.trim() || `Favorito ${Date.now()}`;
+            if (!isValidId(id)) return showStatus('❌ ID inválido', 'error');
+            
+            const favorites = JSON.parse(localStorage.getItem('aceplayer_favorites') || '[]');
+            favorites.push({name, id});
+            localStorage.setItem('aceplayer_favorites', JSON.stringify(favorites));
+            document.getElementById('favName').value = '';
+            loadFavorites();
+            showStatus('💾 Favorito guardado');
+        }
+
+        function deleteFavorite(index, isTemp = false) {
+            if (confirm('🗑 Confirmar borrar?')) {
+                if (isTemp) {
+                    const list = JSON.parse(sessionStorage.getItem('aceplayer_temp') || '[]');
+                    list.splice(index, 1);
+                    sessionStorage.setItem('aceplayer_temp', JSON.stringify(list));
+                    renderTempList();
+                } else {
+                    const list = JSON.parse(localStorage.getItem('aceplayer_favorites') || '[]');
+                    list.splice(index, 1);
+                    localStorage.setItem('aceplayer_favorites', JSON.stringify(list));
+                    loadFavorites();
+                }
+                showStatus('🗑 Borrado');
+            }
+        }
+
+        function clearAllFavorites() {
+            if (confirm('🗑 LIMPIAR TODOS los favoritos?')) {
+                localStorage.removeItem('aceplayer_favorites');
+                loadFavorites();
+                showStatus('🗑 Favoritos limpiados');
+            }
+        }
+
+        function renderList(containerId, list, isFav = false) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = list.map((item, i) => `
+                <div class="list-item" tabindex="0" onclick="playStream('${item.id}')">
+                    <div class="list-item-name">${item.name}</div>
+                    <button onclick="event.stopPropagation(); renameItem(${i}, ${isFav})">✏️</button>
+                    <button onclick="event.stopPropagation(); deleteFavorite(${i}, ${!isFav})">🗑</button>
+                </div>
+            `).join('');
+        }
+
+        function renameItem(index, isFav) {
+            const newName = prompt('Nuevo nombre:');
+            if (newName && newName.trim()) {
+                if (isFav) {
+                    const list = JSON.parse(localStorage.getItem('aceplayer_favorites') || '[]');
+                    list[index].name = newName.trim();
+                    localStorage.setItem('aceplayer_favorites', JSON.stringify(list));
+                    loadFavorites();
+                } else {
+                    const list = JSON.parse(sessionStorage.getItem('aceplayer_temp') || '[]');
+                    list[index].name = newName.trim();
+                    sessionStorage.setItem('aceplayer_temp', JSON.stringify(list));
+                    renderTempList();
+                }
+            }
+        }
+
+        // Importar JSON Dropbox
+        async function importList() {
+            const url = document.getElementById('importUrl').value.trim();
+            try {
+                const res = await fetch(url);
+                const list = await res.json();
+                if (Array.isArray(list)) {
+                    sessionStorage.setItem('aceplayer_temp', JSON.stringify(list));
+                    renderTempList();
+                    currentList = 'temp';
+                    showStatus(`📥 Importados ${list.length} items`);
+                } else {
+                    showStatus('❌ JSON inválido', 'error');
+                }
+            } catch(e) {
+                showStatus('❌ Error importando', 'error');
+            }
+        }
+
+        function renderTempList() {
+            const list = JSON.parse(sessionStorage.getItem('aceplayer_temp') || '[]');
+            renderList('tempList', list, false);
+        }
+
+        // Descargar APK
+        function downloadAceserver() {
+            const a = document.createElement('a');
+            a.href = APK_URL;
+            a.download = 'aceserver-last.apk';
+            a.click();
+            showStatus('🚀 APK descargado. Instalar: Ajustes > Apps > APK');
+        }
+
+        // D-Pad + Enter support
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.activeElement.click?.() || playStream();
+            }
+        });
+
+        // Init
+        loadFavorites();
+        document.getElementById('acestreamId').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') playStream();
+        });
+    </script>
+</body>
+</html>
