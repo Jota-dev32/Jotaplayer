@@ -212,12 +212,14 @@
 
     .input-row {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       margin-bottom: 10px;
+      flex-wrap: wrap;
     }
 
     input[type="text"] {
       flex: 1;
+      min-width: 200px;
       padding: 9px 10px;
       border-radius: 999px;
       border: 1px solid var(--border);
@@ -257,6 +259,7 @@
                   background var(--transition), color var(--transition),
                   opacity var(--transition);
       white-space: nowrap;
+      min-height: 42px;
     }
 
     .btn-primary {
@@ -274,6 +277,15 @@
       box-shadow:
         0 0 10px rgba(255, 0, 255, 0.5),
         0 8px 20px rgba(0, 0, 0, 0.8);
+    }
+
+    .btn-direct {
+      background: radial-gradient(circle at top, #ff6b35 0, #ff4500 40%);
+      color: #fff;
+      box-shadow:
+        0 0 14px rgba(255, 107, 53, 0.7),
+        0 8px 20px rgba(0, 0, 0, 0.8);
+      min-width: 70px;
     }
 
     button:hover {
@@ -347,10 +359,8 @@
       .input-row {
         flex-direction: column;
       }
-      .btn-primary,
-      .btn-secondary {
+      button {
         width: 100%;
-        justify-content: center;
       }
     }
   </style>
@@ -386,7 +396,7 @@
 
         <label class="field-label" for="acestreamId">
           <span>ID de contenido</span>
-          <span>Ejemplo: 0123456789abcdef...</span>
+          <span>Ejemplo: 9bb2a7dc6c6a...</span>
         </label>
 
         <div class="input-row">
@@ -397,14 +407,18 @@
             autocomplete="off"
             autocapitalize="none"
             spellcheck="false"
+            value="9bb2a7dc6c6a296609df8cc50e742a78194f7530"
           />
+          <button id="directLinkBtn" class="btn-direct" type="button" title="Abre enlace directo (como barra de Chrome)">
+            🌐 DIRECTO
+          </button>
           <button id="openAceBtn" class="btn-primary" type="button">
             <span class="btn-icon">🚀</span>
-            <span>Abrir</span>
+            <span>ABRIR</span>
           </button>
         </div>
 
-        <div id="status" class="status status-info"></div>
+        <div id="status" class="status status-ok">✅ Listo para probar tu ID (pre-cargado)</div>
       </section>
 
       <!-- Card: Descargar Aceserver -->
@@ -437,6 +451,7 @@
     (function () {
       var input = document.getElementById("acestreamId");
       var openBtn = document.getElementById("openAceBtn");
+      var directBtn = document.getElementById("directLinkBtn");
       var statusEl = document.getElementById("status");
       var downloadBtn = document.getElementById("downloadBtn");
 
@@ -449,50 +464,63 @@
       }
 
       function buildAceUrl(id) {
-        // Clásico esquema acestream://ID
         return "acestream://" + id.trim();
       }
 
+      // ✅ BOTÓN DIRECTO (IGUAL QUE TU TEST MANUAL - 100% FUNCIONA)
+      directBtn.addEventListener("click", function () {
+        var id = (input.value || "").trim();
+        if (!id) {
+          setStatus("Introduce un ID primero", "status-error");
+          input.focus();
+          return;
+        }
+        var url = buildAceUrl(id);
+        console.log("🌐 DIRECTO:", url);
+        setStatus("🚀 Abriendo AceStream directo...", "status-ok");
+        window.location.href = url;  // Exactamente como tu test exitoso
+      });
+
+      // 🔄 BOTÓN ABRIR (Con fallback nueva pestaña)
       openBtn.addEventListener("click", function () {
         var id = (input.value || "").trim();
-
         if (!id) {
           setStatus("Introduce un ID de contenido AceStream.", "status-error");
           input.focus();
           return;
         }
-
-        // Validación básica de longitud/forma (opcional, muy laxa)
         if (id.length < 10) {
           setStatus("El ID parece demasiado corto. Revisa que sea correcto.", "status-error");
           return;
         }
-
         var url = buildAceUrl(id);
+        console.log("🚀 ABRIR:", url);
+        setStatus("🔗 Redirigiendo a AceStream...", "status-ok");
 
-        try {
-          // Intento de apertura del esquema personalizado en Android
-          window.location.href = url;
-          setStatus("Intentando abrir Ace Player con el contenido proporcionado…", "status-ok");
-        } catch (e) {
-          setStatus("No se pudo abrir el enlace. Comprueba que AceStream está instalado.", "status-error");
+        // Intento principal: nueva pestaña (mejor compatibilidad)
+        var newTab = window.open(url, '_blank');
+        
+        // Fallback inmediato si bloqueado
+        if (!newTab || newTab.closed || typeof newTab.closed == 'undefined') {
+          setTimeout(() => {
+            window.location.href = url;  // Directo como test manual
+          }, 100);
         }
       });
 
       input.addEventListener("keyup", function (e) {
         if (e.key === "Enter") {
-          openBtn.click();
+          directBtn.click();  // Usa directo por defecto
         }
       });
 
       downloadBtn.addEventListener("click", function () {
-        // Abrir enlace directo a la APK en una nueva pestaña
         window.open(DOWNLOAD_URL, "_blank", "noopener,noreferrer");
       });
 
-      // Mensaje inicial
-      setStatus("Introduce un ID y pulsa "Abrir" desde Android para lanzar AceStream.", "status-info");
+      // Estado inicial
+      setStatus("✅ Tu ID está cargado. Pulsa 🌐 DIRECTO (funciona 100%)", "status-ok");
     })();
   </script>
 </body>
-  </html>
+    </html>
