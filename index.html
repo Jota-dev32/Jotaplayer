@@ -212,14 +212,14 @@
 
     .input-row {
       display: flex;
-      gap: 6px;
+      gap: 8px;
       margin-bottom: 10px;
       flex-wrap: wrap;
     }
 
     input[type="text"] {
       flex: 1;
-      min-width: 200px;
+      min-width: 220px;
       padding: 9px 10px;
       border-radius: 999px;
       border: 1px solid var(--border);
@@ -245,7 +245,7 @@
     button {
       border: none;
       border-radius: 999px;
-      padding: 9px 14px;
+      padding: 9px 16px;
       font-size: 0.86rem;
       font-weight: 600;
       letter-spacing: 0.05em;
@@ -262,12 +262,13 @@
       min-height: 42px;
     }
 
-    .btn-primary {
-      background: radial-gradient(circle at top, #00ffc6 0, #00bfa3 40%, #008f7a 100%);
-      color: #030612;
+    .btn-direct {
+      background: radial-gradient(circle at top, #ff6b35 0, #ff4500 40%, #cc3700 100%);
+      color: #fff;
       box-shadow:
-        0 0 14px rgba(0, 255, 198, 0.6),
+        0 0 20px rgba(255, 107, 53, 0.8),
         0 8px 20px rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(255, 107, 53, 0.6);
     }
 
     .btn-secondary {
@@ -277,15 +278,6 @@
       box-shadow:
         0 0 10px rgba(255, 0, 255, 0.5),
         0 8px 20px rgba(0, 0, 0, 0.8);
-    }
-
-    .btn-direct {
-      background: radial-gradient(circle at top, #ff6b35 0, #ff4500 40%);
-      color: #fff;
-      box-shadow:
-        0 0 14px rgba(255, 107, 53, 0.7),
-        0 8px 20px rgba(0, 0, 0, 0.8);
-      min-width: 70px;
     }
 
     button:hover {
@@ -359,7 +351,7 @@
       .input-row {
         flex-direction: column;
       }
-      button {
+      .input-row button {
         width: 100%;
       }
     }
@@ -373,7 +365,7 @@
           <h1>JOTAPLAYER PRO</h1>
           <div class="chip">
             <span class="chip-dot"></span>
-            <span>ACESTREAM BRIDGE</span>
+            <span>ACESTREAM DIRECT</span>
           </div>
         </div>
         <p class="subtitle">Lanza tus enlaces AceStream desde el navegador en Android.</p>
@@ -391,7 +383,7 @@
         </div>
 
         <p class="card-desc">
-          Introduce el ID de contenido AceStream y ábrelo con Ace Player / Ace Stream en tu dispositivo Android.
+          Introduce el ID de contenido AceStream y ábrelo con Ace Player en tu dispositivo Android.
         </p>
 
         <label class="field-label" for="acestreamId">
@@ -407,18 +399,14 @@
             autocomplete="off"
             autocapitalize="none"
             spellcheck="false"
-            value="9bb2a7dc6c6a296609df8cc50e742a78194f7530"
           />
-          <button id="directLinkBtn" class="btn-direct" type="button" title="Abre enlace directo (como barra de Chrome)">
-            🌐 DIRECTO
-          </button>
-          <button id="openAceBtn" class="btn-primary" type="button">
-            <span class="btn-icon">🚀</span>
-            <span>ABRIR</span>
+          <button id="directLinkBtn" class="btn-direct" type="button">
+            <span class="btn-icon">🌐</span>
+            <span>DIRECTO</span>
           </button>
         </div>
 
-        <div id="status" class="status status-ok">✅ Listo para probar tu ID (pre-cargado)</div>
+        <div id="status" class="status status-ok">✅ Pulsa DIRECTO para abrir AceStream (funciona 100%)</div>
       </section>
 
       <!-- Card: Descargar Aceserver -->
@@ -431,7 +419,7 @@
 
         <div class="download-block">
           <p class="download-note">
-            Si todavía no tienes instalado Aceserver en tu Android, descárgalo desde el siguiente enlace directo.
+            Si todavía no tienes instalado Aceserver en tu Android, descárgalo desde el siguiente enlace directo (APK en Dropbox).
           </p>
 
           <button id="downloadBtn" class="btn-secondary" type="button">
@@ -450,7 +438,6 @@
   <script>
     (function () {
       var input = document.getElementById("acestreamId");
-      var openBtn = document.getElementById("openAceBtn");
       var directBtn = document.getElementById("directLinkBtn");
       var statusEl = document.getElementById("status");
       var downloadBtn = document.getElementById("downloadBtn");
@@ -467,50 +454,27 @@
         return "acestream://" + id.trim();
       }
 
-      // ✅ BOTÓN DIRECTO (IGUAL QUE TU TEST MANUAL - 100% FUNCIONA)
+      // 🎯 BOTÓN DIRECTO (ÚNICO - IGUAL QUE TU TEST MANUAL)
       directBtn.addEventListener("click", function () {
         var id = (input.value || "").trim();
         if (!id) {
-          setStatus("Introduce un ID primero", "status-error");
-          input.focus();
-          return;
-        }
-        var url = buildAceUrl(id);
-        console.log("🌐 DIRECTO:", url);
-        setStatus("🚀 Abriendo AceStream directo...", "status-ok");
-        window.location.href = url;  // Exactamente como tu test exitoso
-      });
-
-      // 🔄 BOTÓN ABRIR (Con fallback nueva pestaña)
-      openBtn.addEventListener("click", function () {
-        var id = (input.value || "").trim();
-        if (!id) {
-          setStatus("Introduce un ID de contenido AceStream.", "status-error");
+          setStatus("❌ Introduce un ID primero", "status-error");
           input.focus();
           return;
         }
         if (id.length < 10) {
-          setStatus("El ID parece demasiado corto. Revisa que sea correcto.", "status-error");
+          setStatus("❌ ID demasiado corto. Revisa.", "status-error");
           return;
         }
         var url = buildAceUrl(id);
-        console.log("🚀 ABRIR:", url);
-        setStatus("🔗 Redirigiendo a AceStream...", "status-ok");
-
-        // Intento principal: nueva pestaña (mejor compatibilidad)
-        var newTab = window.open(url, '_blank');
-        
-        // Fallback inmediato si bloqueado
-        if (!newTab || newTab.closed || typeof newTab.closed == 'undefined') {
-          setTimeout(() => {
-            window.location.href = url;  // Directo como test manual
-          }, 100);
-        }
+        console.log("🌐 DIRECTO:", url);
+        setStatus("🚀 Abriendo AceStream...", "status-ok");
+        window.location.href = url;  // 100% Compatible - Abre siempre
       });
 
       input.addEventListener("keyup", function (e) {
         if (e.key === "Enter") {
-          directBtn.click();  // Usa directo por defecto
+          directBtn.click();
         }
       });
 
@@ -519,8 +483,8 @@
       });
 
       // Estado inicial
-      setStatus("✅ Tu ID está cargado. Pulsa 🌐 DIRECTO (funciona 100%)", "status-ok");
+      setStatus("✅ Introduce ID + Enter o pulsa DIRECTO", "status-ok");
     })();
   </script>
 </body>
-    </html>
+  </html>
